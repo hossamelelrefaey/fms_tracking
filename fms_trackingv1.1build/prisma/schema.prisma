@@ -1,0 +1,776 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Vehicle {
+  id                        Int                 @id @default(autoincrement())
+  name                      String
+  code                      String?
+  imei                      String              @unique
+  make                      String?
+  model                     String?
+  registrationNumber        String?
+  fuelType                  String?
+  fuelConsumption           Float?
+  fuelCost                  Float?
+  vehicleType               String?
+  plateNumber               String
+  vin                       String?
+  licenseExpire             String?
+  licenseExpireReminder     Boolean?
+  simNumber                 String
+  simNumberSerial           String?
+  odometer                  Float?
+  brand                     String?
+  color                     String?
+  year                      Int?
+  vehicleExpires            String
+  parent                    Int
+  accSupport                Boolean
+  fuelSupport               Boolean
+  fuelCapacity              Float?
+  tankHeight                Float?
+  tankWidth                 Float?
+  tankLength                Float?
+  doorSupport               Boolean
+  weightSensorSupport       Boolean?
+  temperatureSensorSupport  Boolean?
+  iButtonSensorSupport      Boolean?
+  ptoSensorSupport          Boolean?
+  seatSensorSupport         Boolean?
+  refrigeratorSensorSupport Boolean?
+  headlightsSensorSupport   Boolean?
+  idleTime                  Float?
+  idleAlert                 Boolean?
+  archived                  Boolean?
+  department                Int?
+  driverId                  Int?
+  icon                      String
+  driver                    Driver?             @relation(fields: [driverId], references: [id])
+  attachments               VehicleAttachment[]
+
+  @@index([driverId], map: "Vehicle_driverId_fkey")
+}
+
+model Driver {
+  id                     Int          @id @default(autoincrement())
+  name                   String
+  picture                String?
+  code                   String?       @unique
+  idNo                   String?      @unique
+  phoneNumber            String?      @unique
+  emergencyPhoneNumber   String?
+  address                String?
+  licenseNo              String?      @unique
+  licenseStartDate       DateTime?
+  licenseExpireDate      DateTime?
+  licenseExpireReminder  Boolean?     @default(false)
+  contractStartDate      DateTime?
+  contractExpireDate     DateTime?
+  contractExpireReminder Boolean?     @default(false)
+  attachments            Attachment[]
+  vehicles               Vehicle[]
+}
+
+model Attachment {
+  id       Int    @id @default(autoincrement())
+  url      String
+  driverId Int
+  driver   Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId], map: "Attachment_driverId_fkey")
+}
+
+model VehicleAttachment {
+  id        Int     @id @default(autoincrement())
+  url       String
+  vehicleId Int
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId], map: "VehicleAttachment_vehicleId_fkey")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model DATABASECHANGELOG {
+  ID            String   @db.VarChar(255)
+  AUTHOR        String   @db.VarChar(255)
+  FILENAME      String   @db.VarChar(255)
+  DATEEXECUTED  DateTime @db.DateTime(0)
+  ORDEREXECUTED Int
+  EXECTYPE      String   @db.VarChar(10)
+  MD5SUM        String?  @db.VarChar(35)
+  DESCRIPTION   String?  @db.VarChar(255)
+  COMMENTS      String?  @db.VarChar(255)
+  TAG           String?  @db.VarChar(255)
+  LIQUIBASE     String?  @db.VarChar(20)
+  CONTEXTS      String?  @db.VarChar(255)
+  LABELS        String?  @db.VarChar(255)
+  DEPLOYMENT_ID String?  @db.VarChar(10)
+
+  @@ignore
+}
+
+model DATABASECHANGELOGLOCK {
+  ID          Int       @id
+  LOCKED      Boolean   @db.Bit(1)
+  LOCKGRANTED DateTime? @db.DateTime(0)
+  LOCKEDBY    String?   @db.VarChar(255)
+}
+
+model tc_attributes {
+  id                  Int                   @id @default(autoincrement())
+  description         String                @db.VarChar(4000)
+  type                String                @db.VarChar(128)
+  attribute           String                @db.VarChar(128)
+  expression          String                @db.VarChar(4000)
+  priority            Int                   @default(0)
+  tc_device_attribute tc_device_attribute[] @ignore
+  tc_group_attribute  tc_group_attribute[]  @ignore
+  tc_user_attribute   tc_user_attribute[]   @ignore
+}
+
+model tc_calendars {
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(128)
+  data             Bytes              @db.MediumBlob
+  attributes       String             @db.VarChar(4000)
+  tc_devices       tc_devices[]
+  tc_geofences     tc_geofences[]
+  tc_notifications tc_notifications[]
+  tc_reports       tc_reports[]
+  tc_user_calendar tc_user_calendar[] @ignore
+}
+
+model tc_commands {
+  id                Int                 @id @default(autoincrement())
+  description       String              @db.VarChar(4000)
+  type              String              @db.VarChar(128)
+  textchannel       Boolean             @default(dbgenerated("b'0'")) @db.Bit(1)
+  attributes        String              @db.VarChar(4000)
+  tc_device_command tc_device_command[] @ignore
+  tc_group_command  tc_group_command[]  @ignore
+  tc_notifications  tc_notifications[]
+  tc_user_command   tc_user_command[]   @ignore
+}
+
+model tc_commands_queue {
+  id          Int        @id @default(autoincrement())
+  deviceid    Int
+  type        String     @db.VarChar(128)
+  textchannel Boolean    @default(dbgenerated("b'0'")) @db.Bit(1)
+  attributes  String     @db.VarChar(4000)
+  tc_devices  tc_devices @relation(fields: [deviceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_commands_queue_deviceid")
+
+  @@index([deviceid], map: "idx_commands_queue_deviceid")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_device_attribute {
+  deviceid      Int
+  attributeid   Int
+  tc_attributes tc_attributes @relation(fields: [attributeid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_device_attribute_attributeid")
+  tc_devices    tc_devices    @relation(fields: [deviceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_device_attribute_deviceid")
+
+  @@index([attributeid], map: "fk_user_device_attribute_attributeid")
+  @@index([deviceid], map: "fk_user_device_attribute_deviceid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_device_command {
+  deviceid    Int
+  commandid   Int
+  tc_commands tc_commands @relation(fields: [commandid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_command_commandid")
+  tc_devices  tc_devices  @relation(fields: [deviceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_command_deviceid")
+
+  @@index([commandid], map: "fk_device_command_commandid")
+  @@index([deviceid], map: "fk_device_command_deviceid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_device_driver {
+  deviceid   Int
+  driverid   Int
+  tc_devices tc_devices @relation(fields: [deviceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_driver_deviceid")
+  tc_drivers tc_drivers @relation(fields: [driverid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_driver_driverid")
+
+  @@index([deviceid], map: "fk_device_driver_deviceid")
+  @@index([driverid], map: "fk_device_driver_driverid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_device_geofence {
+  deviceid     Int
+  geofenceid   Int
+  tc_devices   tc_devices   @relation(fields: [deviceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_geofence_deviceid")
+  tc_geofences tc_geofences @relation(fields: [geofenceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_geofence_geofenceid")
+
+  @@index([deviceid], map: "fk_device_geofence_deviceid")
+  @@index([geofenceid], map: "fk_device_geofence_geofenceid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_device_maintenance {
+  deviceid        Int
+  maintenanceid   Int
+  tc_devices      tc_devices      @relation(fields: [deviceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_maintenance_deviceid")
+  tc_maintenances tc_maintenances @relation(fields: [maintenanceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_maintenance_maintenanceid")
+
+  @@index([deviceid], map: "fk_device_maintenance_deviceid")
+  @@index([maintenanceid], map: "fk_device_maintenance_maintenanceid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_device_notification {
+  deviceid         Int
+  notificationid   Int
+  tc_devices       tc_devices       @relation(fields: [deviceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_notification_deviceid")
+  tc_notifications tc_notifications @relation(fields: [notificationid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_notification_notificationid")
+
+  @@index([deviceid], map: "fk_device_notification_deviceid")
+  @@index([notificationid], map: "fk_device_notification_notificationid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_device_order {
+  deviceid   Int
+  orderid    Int
+  tc_devices tc_devices @relation(fields: [deviceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_order_deviceid")
+  tc_orders  tc_orders  @relation(fields: [orderid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_order_orderid")
+
+  @@index([deviceid], map: "fk_device_order_deviceid")
+  @@index([orderid], map: "fk_device_order_orderid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_device_report {
+  deviceid   Int
+  reportid   Int
+  tc_devices tc_devices @relation(fields: [deviceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_report_deviceid")
+  tc_reports tc_reports @relation(fields: [reportid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_device_report_reportid")
+
+  @@index([deviceid], map: "fk_device_report_deviceid")
+  @@index([reportid], map: "fk_device_report_reportid")
+  @@ignore
+}
+
+model tc_devices {
+  id                     Int                      @id @default(autoincrement())
+  name                   String                   @db.VarChar(128)
+  uniqueid               String                   @unique(map: "uniqueid") @db.VarChar(128)
+  lastupdate             DateTime?                @db.Timestamp(0)
+  positionid             Int?
+  groupid                Int?
+  attributes             String?                  @db.VarChar(4000)
+  phone                  String?                  @db.VarChar(128)
+  model                  String?                  @db.VarChar(128)
+  contact                String?                  @db.VarChar(512)
+  category               String?                  @db.VarChar(128)
+  disabled               Boolean?                 @default(dbgenerated("b'0'")) @db.Bit(1)
+  status                 String?                  @db.Char(8)
+  expirationtime         DateTime?                @db.Timestamp(0)
+  motionstate            Boolean?                 @default(dbgenerated("b'0'")) @db.Bit(1)
+  motiontime             DateTime?                @db.Timestamp(0)
+  motiondistance         Float?                   @default(0)
+  overspeedstate         Boolean?                 @default(dbgenerated("b'0'")) @db.Bit(1)
+  overspeedtime          DateTime?                @db.Timestamp(0)
+  overspeedgeofenceid    Int?                     @default(0)
+  motionstreak           Boolean?                 @default(dbgenerated("b'0'")) @db.Bit(1)
+  calendarid             Int?
+  tc_commands_queue      tc_commands_queue[]
+  tc_device_attribute    tc_device_attribute[]    @ignore
+  tc_device_command      tc_device_command[]      @ignore
+  tc_device_driver       tc_device_driver[]       @ignore
+  tc_device_geofence     tc_device_geofence[]     @ignore
+  tc_device_maintenance  tc_device_maintenance[]  @ignore
+  tc_device_notification tc_device_notification[] @ignore
+  tc_device_order        tc_device_order[]        @ignore
+  tc_device_report       tc_device_report[]       @ignore
+  tc_calendars           tc_calendars?            @relation(fields: [calendarid], references: [id], onUpdate: Restrict, map: "fk_devices_calendarid")
+  tc_groups              tc_groups?               @relation(fields: [groupid], references: [id], onUpdate: NoAction, map: "fk_devices_groupid")
+  tc_user_device         tc_user_device[]         @ignore
+
+  @@index([calendarid], map: "fk_devices_calendarid")
+  @@index([groupid], map: "fk_devices_groupid")
+  @@index([uniqueid], map: "idx_devices_uniqueid")
+}
+
+model tc_drivers {
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(128)
+  uniqueid         String             @unique(map: "uniqueid") @db.VarChar(128)
+  attributes       String             @db.VarChar(4000)
+  tc_device_driver tc_device_driver[] @ignore
+  tc_group_driver  tc_group_driver[]  @ignore
+  tc_user_driver   tc_user_driver[]   @ignore
+
+  @@index([uniqueid], map: "idx_drivers_uniqueid")
+}
+
+model tc_events {
+  id            Int       @id @default(autoincrement())
+  type          String    @db.VarChar(128)
+  eventtime     DateTime? @db.Timestamp(0)
+  deviceid      Int?
+  positionid    Int?
+  geofenceid    Int?
+  attributes    String?   @db.VarChar(4000)
+  maintenanceid Int?
+
+  @@index([deviceid, eventtime], map: "event_deviceid_servertime")
+}
+
+model tc_geofences {
+  id                 Int                  @id @default(autoincrement())
+  name               String               @db.VarChar(128)
+  description        String?              @db.VarChar(128)
+  area               String               @db.VarChar(4096)
+  attributes         String?              @db.VarChar(4000)
+  calendarid         Int?
+  tc_device_geofence tc_device_geofence[] @ignore
+  tc_calendars       tc_calendars?        @relation(fields: [calendarid], references: [id], onUpdate: NoAction, map: "fk_geofence_calendar_calendarid")
+  tc_group_geofence  tc_group_geofence[]  @ignore
+  tc_user_geofence   tc_user_geofence[]   @ignore
+
+  @@index([calendarid], map: "fk_geofence_calendar_calendarid")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_group_attribute {
+  groupid       Int
+  attributeid   Int
+  tc_attributes tc_attributes @relation(fields: [attributeid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_attribute_attributeid")
+  tc_groups     tc_groups     @relation(fields: [groupid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_attribute_groupid")
+
+  @@index([attributeid], map: "fk_group_attribute_attributeid")
+  @@index([groupid], map: "fk_group_attribute_groupid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_group_command {
+  groupid     Int
+  commandid   Int
+  tc_commands tc_commands @relation(fields: [commandid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_command_commandid")
+  tc_groups   tc_groups   @relation(fields: [groupid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_command_groupid")
+
+  @@index([commandid], map: "fk_group_command_commandid")
+  @@index([groupid], map: "fk_group_command_groupid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_group_driver {
+  groupid    Int
+  driverid   Int
+  tc_drivers tc_drivers @relation(fields: [driverid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_driver_driverid")
+  tc_groups  tc_groups  @relation(fields: [groupid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_driver_groupid")
+
+  @@index([driverid], map: "fk_group_driver_driverid")
+  @@index([groupid], map: "fk_group_driver_groupid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_group_geofence {
+  groupid      Int
+  geofenceid   Int
+  tc_geofences tc_geofences @relation(fields: [geofenceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_geofence_geofenceid")
+  tc_groups    tc_groups    @relation(fields: [groupid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_geofence_groupid")
+
+  @@index([geofenceid], map: "fk_group_geofence_geofenceid")
+  @@index([groupid], map: "fk_group_geofence_groupid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_group_maintenance {
+  groupid         Int
+  maintenanceid   Int
+  tc_groups       tc_groups       @relation(fields: [groupid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_maintenance_groupid")
+  tc_maintenances tc_maintenances @relation(fields: [maintenanceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_maintenance_maintenanceid")
+
+  @@index([groupid], map: "fk_group_maintenance_groupid")
+  @@index([maintenanceid], map: "fk_group_maintenance_maintenanceid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_group_notification {
+  groupid          Int
+  notificationid   Int
+  tc_groups        tc_groups        @relation(fields: [groupid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_notification_groupid")
+  tc_notifications tc_notifications @relation(fields: [notificationid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_notification_notificationid")
+
+  @@index([groupid], map: "fk_group_notification_groupid")
+  @@index([notificationid], map: "fk_group_notification_notificationid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_group_order {
+  groupid   Int
+  orderid   Int
+  tc_groups tc_groups @relation(fields: [groupid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_order_groupid")
+  tc_orders tc_orders @relation(fields: [orderid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_order_orderid")
+
+  @@index([groupid], map: "fk_group_order_groupid")
+  @@index([orderid], map: "fk_group_order_orderid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_group_report {
+  groupid    Int
+  reportid   Int
+  tc_groups  tc_groups  @relation(fields: [groupid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_report_groupid")
+  tc_reports tc_reports @relation(fields: [reportid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_group_report_reportid")
+
+  @@index([groupid], map: "fk_group_report_groupid")
+  @@index([reportid], map: "fk_group_report_reportid")
+  @@ignore
+}
+
+model tc_groups {
+  id                    Int                     @id @default(autoincrement())
+  name                  String                  @db.VarChar(128)
+  groupid               Int?
+  attributes            String?                 @db.VarChar(4000)
+  tc_devices            tc_devices[]
+  tc_group_attribute    tc_group_attribute[]    @ignore
+  tc_group_command      tc_group_command[]      @ignore
+  tc_group_driver       tc_group_driver[]       @ignore
+  tc_group_geofence     tc_group_geofence[]     @ignore
+  tc_group_maintenance  tc_group_maintenance[]  @ignore
+  tc_group_notification tc_group_notification[] @ignore
+  tc_group_order        tc_group_order[]        @ignore
+  tc_group_report       tc_group_report[]       @ignore
+  tc_groups             tc_groups?              @relation("tc_groupsTotc_groups", fields: [groupid], references: [id], onUpdate: Restrict, map: "fk_groups_groupid")
+  other_tc_groups       tc_groups[]             @relation("tc_groupsTotc_groups")
+  tc_user_group         tc_user_group[]         @ignore
+
+  @@index([groupid], map: "fk_groups_groupid")
+}
+
+model tc_keystore {
+  id         Int   @id @default(autoincrement())
+  publickey  Bytes @db.MediumBlob
+  privatekey Bytes @db.MediumBlob
+}
+
+model tc_maintenances {
+  id                    Int                     @id @default(autoincrement())
+  name                  String                  @db.VarChar(4000)
+  type                  String                  @db.VarChar(128)
+  start                 Float                   @default(0)
+  period                Float                   @default(0)
+  attributes            String                  @db.VarChar(4000)
+  tc_device_maintenance tc_device_maintenance[] @ignore
+  tc_group_maintenance  tc_group_maintenance[]  @ignore
+  tc_user_maintenance   tc_user_maintenance[]   @ignore
+}
+
+model tc_notifications {
+  id                     Int                      @id @default(autoincrement())
+  type                   String                   @db.VarChar(128)
+  attributes             String?                  @db.VarChar(4000)
+  always                 Boolean                  @default(dbgenerated("b'0'")) @db.Bit(1)
+  calendarid             Int?
+  notificators           String?                  @db.VarChar(128)
+  commandid              Int?
+  tc_device_notification tc_device_notification[] @ignore
+  tc_group_notification  tc_group_notification[]  @ignore
+  tc_calendars           tc_calendars?            @relation(fields: [calendarid], references: [id], onUpdate: Restrict, map: "fk_notification_calendar_calendarid")
+  tc_commands            tc_commands?             @relation(fields: [commandid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notifications_commandid")
+  tc_user_notification   tc_user_notification[]   @ignore
+
+  @@index([calendarid], map: "fk_notification_calendar_calendarid")
+  @@index([commandid], map: "fk_notifications_commandid")
+}
+
+model tc_orders {
+  id              Int               @id @default(autoincrement())
+  uniqueid        String            @db.VarChar(128)
+  description     String?           @db.VarChar(512)
+  fromaddress     String?           @db.VarChar(512)
+  toaddress       String?           @db.VarChar(512)
+  attributes      String            @db.VarChar(4000)
+  tc_device_order tc_device_order[] @ignore
+  tc_group_order  tc_group_order[]  @ignore
+  tc_user_order   tc_user_order[]   @ignore
+}
+
+model tc_positions {
+  id          Int      @id @default(autoincrement())
+  protocol    String?  @db.VarChar(128)
+  deviceid    Int
+  servertime  DateTime @default(now()) @db.Timestamp(0)
+  devicetime  DateTime @default(now()) @db.Timestamp(0)
+  fixtime     DateTime @default(now()) @db.Timestamp(0)
+  valid       Boolean  @db.Bit(1)
+  latitude    Float
+  longitude   Float
+  altitude    Float    @db.Float
+  speed       Float    @db.Float
+  course      Float    @db.Float
+  address     String?  @db.VarChar(512)
+  attributes  String?  @db.VarChar(4000)
+  accuracy    Float    @default(0)
+  network     String?  @db.VarChar(4000)
+  geofenceids String?  @db.VarChar(128)
+
+  @@index([deviceid, fixtime], map: "position_deviceid_fixtime")
+}
+
+model tc_reports {
+  id               Int                @id @default(autoincrement())
+  type             String             @db.VarChar(32)
+  description      String             @db.VarChar(128)
+  calendarid       Int
+  attributes       String             @db.VarChar(4000)
+  tc_device_report tc_device_report[] @ignore
+  tc_group_report  tc_group_report[]  @ignore
+  tc_calendars     tc_calendars       @relation(fields: [calendarid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_reports_calendarid")
+  tc_user_report   tc_user_report[]   @ignore
+
+  @@index([calendarid], map: "fk_reports_calendarid")
+}
+
+model tc_servers {
+  id               Int      @id @default(autoincrement())
+  registration     Boolean  @default(dbgenerated("b'0'")) @db.Bit(1)
+  latitude         Float    @default(0)
+  longitude        Float    @default(0)
+  zoom             Int      @default(0)
+  map              String?  @db.VarChar(128)
+  bingkey          String?  @db.VarChar(128)
+  mapurl           String?  @db.VarChar(512)
+  readonly         Boolean  @default(dbgenerated("b'0'")) @db.Bit(1)
+  attributes       String?  @db.VarChar(4000)
+  forcesettings    Boolean  @default(dbgenerated("b'0'")) @db.Bit(1)
+  coordinateformat String?  @db.VarChar(128)
+  devicereadonly   Boolean? @default(dbgenerated("b'0'")) @db.Bit(1)
+  limitcommands    Boolean? @default(dbgenerated("b'0'")) @db.Bit(1)
+  poilayer         String?  @db.VarChar(512)
+  announcement     String?  @db.VarChar(4000)
+  disablereports   Boolean? @default(dbgenerated("b'0'")) @db.Bit(1)
+  overlayurl       String?  @db.VarChar(512)
+  fixedemail       Boolean? @default(dbgenerated("b'0'")) @db.Bit(1)
+}
+
+model tc_statistics {
+  id                  Int      @id @default(autoincrement())
+  capturetime         DateTime @default(now()) @db.Timestamp(0)
+  activeusers         Int      @default(0)
+  activedevices       Int      @default(0)
+  requests            Int      @default(0)
+  messagesreceived    Int      @default(0)
+  messagesstored      Int      @default(0)
+  attributes          String   @db.VarChar(4096)
+  mailsent            Int      @default(0)
+  smssent             Int      @default(0)
+  geocoderrequests    Int      @default(0)
+  geolocationrequests Int      @default(0)
+  protocols           String?  @db.VarChar(4096)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_attribute {
+  userid        Int
+  attributeid   Int
+  tc_attributes tc_attributes @relation(fields: [attributeid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_attribute_attributeid")
+  tc_users      tc_users      @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_attribute_userid")
+
+  @@index([attributeid], map: "fk_user_attribute_attributeid")
+  @@index([userid], map: "fk_user_attribute_userid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_calendar {
+  userid       Int
+  calendarid   Int
+  tc_calendars tc_calendars @relation(fields: [calendarid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_calendar_calendarid")
+  tc_users     tc_users     @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_calendar_userid")
+
+  @@index([calendarid], map: "fk_user_calendar_calendarid")
+  @@index([userid], map: "fk_user_calendar_userid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_command {
+  userid      Int
+  commandid   Int
+  tc_commands tc_commands @relation(fields: [commandid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_command_commandid")
+  tc_users    tc_users    @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_command_userid")
+
+  @@index([commandid], map: "fk_user_command_commandid")
+  @@index([userid], map: "fk_user_command_userid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_device {
+  userid     Int
+  deviceid   Int
+  tc_devices tc_devices @relation(fields: [deviceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_device_deviceid")
+  tc_users   tc_users   @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_device_userid")
+
+  @@index([deviceid], map: "fk_user_device_deviceid")
+  @@index([userid], map: "user_device_user_id")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_driver {
+  userid     Int
+  driverid   Int
+  tc_drivers tc_drivers @relation(fields: [driverid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_driver_driverid")
+  tc_users   tc_users   @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_driver_userid")
+
+  @@index([driverid], map: "fk_user_driver_driverid")
+  @@index([userid], map: "fk_user_driver_userid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_geofence {
+  userid       Int
+  geofenceid   Int
+  tc_geofences tc_geofences @relation(fields: [geofenceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_geofence_geofenceid")
+  tc_users     tc_users     @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_geofence_userid")
+
+  @@index([geofenceid], map: "fk_user_geofence_geofenceid")
+  @@index([userid], map: "fk_user_geofence_userid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_group {
+  userid    Int
+  groupid   Int
+  tc_groups tc_groups @relation(fields: [groupid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_group_groupid")
+  tc_users  tc_users  @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_group_userid")
+
+  @@index([groupid], map: "fk_user_group_groupid")
+  @@index([userid], map: "fk_user_group_userid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_maintenance {
+  userid          Int
+  maintenanceid   Int
+  tc_maintenances tc_maintenances @relation(fields: [maintenanceid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_maintenance_maintenanceid")
+  tc_users        tc_users        @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_maintenance_userid")
+
+  @@index([maintenanceid], map: "fk_user_maintenance_maintenanceid")
+  @@index([userid], map: "fk_user_maintenance_userid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_notification {
+  userid           Int
+  notificationid   Int
+  tc_notifications tc_notifications @relation(fields: [notificationid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_notification_notificationid")
+  tc_users         tc_users         @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_notification_userid")
+
+  @@index([notificationid], map: "fk_user_notification_notificationid")
+  @@index([userid], map: "fk_user_notification_userid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_order {
+  userid    Int
+  orderid   Int
+  tc_orders tc_orders @relation(fields: [orderid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_order_orderid")
+  tc_users  tc_users  @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_order_userid")
+
+  @@index([orderid], map: "fk_user_order_orderid")
+  @@index([userid], map: "fk_user_order_userid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_report {
+  userid     Int
+  reportid   Int
+  tc_reports tc_reports @relation(fields: [reportid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_report_reportid")
+  tc_users   tc_users   @relation(fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_report_userid")
+
+  @@index([reportid], map: "fk_user_report_reportid")
+  @@index([userid], map: "fk_user_report_userid")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tc_user_user {
+  userid                                        Int
+  manageduserid                                 Int
+  tc_users_tc_user_user_manageduseridTotc_users tc_users @relation("tc_user_user_manageduseridTotc_users", fields: [manageduserid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_user_manageduserid")
+  tc_users_tc_user_user_useridTotc_users        tc_users @relation("tc_user_user_useridTotc_users", fields: [userid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_user_userid")
+
+  @@index([manageduserid], map: "fk_user_user_manageduserid")
+  @@index([userid], map: "fk_user_user_userid")
+  @@ignore
+}
+
+model tc_users {
+  id                                                Int                    @id @default(autoincrement())
+  name                                              String                 @db.VarChar(128)
+  email                                             String                 @unique(map: "email") @db.VarChar(128)
+  hashedpassword                                    String?                @db.VarChar(128)
+  salt                                              String?                @db.VarChar(128)
+  readonly                                          Boolean                @default(dbgenerated("b'0'")) @db.Bit(1)
+  administrator                                     Boolean?               @db.Bit(1)
+  map                                               String?                @db.VarChar(128)
+  latitude                                          Float                  @default(0)
+  longitude                                         Float                  @default(0)
+  zoom                                              Int                    @default(0)
+  attributes                                        String?                @db.VarChar(4000)
+  coordinateformat                                  String?                @db.VarChar(128)
+  disabled                                          Boolean?               @default(dbgenerated("b'0'")) @db.Bit(1)
+  expirationtime                                    DateTime?              @db.Timestamp(0)
+  devicelimit                                       Int?                   @default(-1)
+  userlimit                                         Int?                   @default(0)
+  devicereadonly                                    Boolean?               @default(dbgenerated("b'0'")) @db.Bit(1)
+  phone                                             String?                @db.VarChar(128)
+  limitcommands                                     Boolean?               @default(dbgenerated("b'0'")) @db.Bit(1)
+  login                                             String?                @db.VarChar(128)
+  poilayer                                          String?                @db.VarChar(512)
+  disablereports                                    Boolean?               @default(dbgenerated("b'0'")) @db.Bit(1)
+  fixedemail                                        Boolean?               @default(dbgenerated("b'0'")) @db.Bit(1)
+  totpkey                                           String?                @db.VarChar(64)
+  temporary                                         Boolean?               @default(dbgenerated("b'0'")) @db.Bit(1)
+  tc_user_attribute                                 tc_user_attribute[]    @ignore
+  tc_user_calendar                                  tc_user_calendar[]     @ignore
+  tc_user_command                                   tc_user_command[]      @ignore
+  tc_user_device                                    tc_user_device[]       @ignore
+  tc_user_driver                                    tc_user_driver[]       @ignore
+  tc_user_geofence                                  tc_user_geofence[]     @ignore
+  tc_user_group                                     tc_user_group[]        @ignore
+  tc_user_maintenance                               tc_user_maintenance[]  @ignore
+  tc_user_notification                              tc_user_notification[] @ignore
+  tc_user_order                                     tc_user_order[]        @ignore
+  tc_user_report                                    tc_user_report[]       @ignore
+  tc_user_user_tc_user_user_manageduseridTotc_users tc_user_user[]         @relation("tc_user_user_manageduseridTotc_users") @ignore
+  tc_user_user_tc_user_user_useridTotc_users        tc_user_user[]         @relation("tc_user_user_useridTotc_users") @ignore
+
+  @@index([email], map: "idx_users_email")
+  @@index([login], map: "idx_users_login")
+}
