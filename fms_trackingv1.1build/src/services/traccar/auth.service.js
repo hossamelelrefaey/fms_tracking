@@ -14,7 +14,7 @@
 // module.exports = traccarClient
 
 module.exports = {
-  baseURL: 'http://localhost:8082/api',
-  username: '7ossam.elrefa3y@gmail.com',
-  password: 'United2024$',
+  baseURL: 'https://tracking.passenger-mea.com/api',
+  username: 'ayman@gmail.com',
+  password: '123456',
 };
