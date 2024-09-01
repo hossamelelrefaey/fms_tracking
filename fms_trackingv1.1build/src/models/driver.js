@@ -88,6 +88,15 @@ const findDriversByIds = async (ids) => {
         },
     });
 };
+const findVehiclesByCodes = async (Codes) => {
+    return await prisma.driver.findMany({
+      where: {
+        code: {
+          in: Codes,
+        },
+      },
+    });
+  };
 
 module.exports = {
     createDriver,
@@ -100,5 +109,6 @@ module.exports = {
     findDriversByIds,
     updateDriverAttachments,
     deleteDriverAttachments,
-    getDriverAttachments
+    getDriverAttachments,
+    findVehiclesByCodes
 };
